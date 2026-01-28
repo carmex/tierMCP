@@ -272,45 +272,54 @@ function fitText(
 ): { lines: string[], fontSize: number } {
     if (!text) return { lines: [], fontSize: 12 };
 
-    let bestLines: string[] = [text];
-    let bestSize = 10;
-
     // Try sizes from starting size down to 8px
     const startSize = fontWeight === 'bold' ? 24 : 16;
+    let validResultWithBreaks: { lines: string[], fontSize: number } | null = null;
 
     for (let size = startSize; size >= 8; size -= 1) {
         ctx.font = `${fontWeight} ${size}px ${FONT_FAMILY}`;
-        const lines = wrapText(ctx, text, maxWidth);
+        const { lines, wasWordBroken } = wrapText(ctx, text, maxWidth);
         const totalHeight = lines.length * size * 1.2;
 
         if (totalHeight <= maxHeight) {
-            // Check if any single line is still too wide (e.g. forced break didn't work?)
-            // wrapText should guarantee width <= maxWidth but let's be safe.
-            const widening = lines.some(l => ctx.measureText(l).width > maxWidth);
-            if (!widening) {
+            if (!wasWordBroken) {
+                // Found optimal: fits and no awkward breaks!
                 return { lines, fontSize: size };
             }
-        }
-
-        if (size === 8) {
-            bestLines = lines;
+            // Record the largest size that fits even if it has breaks, just in case we can't do better
+            if (!validResultWithBreaks) {
+                validResultWithBreaks = { lines, fontSize: size };
+            }
         }
     }
 
-    return { lines: bestLines, fontSize: 8 };
+    // If we found a result that fits (but had breaks), use it.
+    if (validResultWithBreaks) {
+        return validResultWithBreaks;
+    }
+
+    // Fallback: Just return 8px result
+    ctx.font = `${fontWeight} 8px ${FONT_FAMILY}`;
+    const { lines } = wrapText(ctx, text, maxWidth);
+    return { lines, fontSize: 8 };
 }
 
-function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+function wrapText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxWidth: number
+): { lines: string[], wasWordBroken: boolean } {
     const words = text.split(' ');
     const lines: string[] = [];
     let currentLine = words[0] || '';
+    let wasWordBroken = false;
 
     // Helper to calculate width
     const getWidth = (t: string) => ctx.measureText(t).width;
 
     // First, handle the very first word if it's too long
     if (getWidth(currentLine) > maxWidth) {
-        // Break the first word
+        wasWordBroken = true;
         const broken = breakWord(ctx, currentLine, maxWidth);
         lines.push(...broken.slice(0, -1));
         currentLine = broken[broken.length - 1];
@@ -328,6 +337,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
 
             // If the new start-of-line word is itself too long, break it
             if (getWidth(currentLine) > maxWidth) {
+                wasWordBroken = true;
                 const broken = breakWord(ctx, currentLine, maxWidth);
                 lines.push(...broken.slice(0, -1));
                 currentLine = broken[broken.length - 1];
@@ -335,7 +345,7 @@ function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number)
         }
     }
     if (currentLine) lines.push(currentLine);
-    return lines;
+    return { lines, wasWordBroken };
 }
 
 function breakWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
