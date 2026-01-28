@@ -169,11 +169,7 @@ export async function generateTierListImage(config: TierListConfig): Promise<Buf
         ctx.strokeRect(0, currentY, TIER_LABEL_WIDTH, rowHeight);
 
         // Tier Label Text
-        ctx.fillStyle = '#000000';
-        ctx.font = `bold 24px ${FONT_FAMILY}`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(tier.label, TIER_LABEL_WIDTH / 2, currentY + rowHeight / 2);
+        drawLabelText(ctx, tier.label, 0, currentY, TIER_LABEL_WIDTH, rowHeight);
 
         // Draw Row Background (Space for items)
         ctx.fillStyle = '#2d2d2d'; // Darker gray for item area
@@ -220,11 +216,140 @@ function drawTextItem(ctx: CanvasRenderingContext2D, text: string, x: number, y:
     ctx.strokeRect(x, y, ITEM_SIZE, ITEM_SIZE);
 
     ctx.fillStyle = '#ffffff';
-    ctx.font = '12px ' + FONT_FAMILY;
+
+    // Fit text into the box with some padding
+    const padding = 4;
+    const maxWidth = ITEM_SIZE - (padding * 2);
+    const maxHeight = ITEM_SIZE - (padding * 2);
+
+    const { lines, fontSize } = fitText(ctx, text, maxWidth, maxHeight, 'normal');
+
+    ctx.font = `${fontSize}px ${FONT_FAMILY}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Very basic wrapping or truncation could go here
-    const cleanText = text.substring(0, 10); // Simple truncation
-    ctx.fillText(cleanText, x + ITEM_SIZE / 2, y + ITEM_SIZE / 2);
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * lineHeight;
+    let currentTextY = y + (ITEM_SIZE - totalTextHeight) / 2 + (lineHeight / 2);
+
+    for (const line of lines) {
+        ctx.fillText(line, x + ITEM_SIZE / 2, currentTextY);
+        currentTextY += lineHeight;
+    }
+}
+
+function drawLabelText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, width: number, height: number) {
+    ctx.fillStyle = '#000000';
+
+    // Padded box
+    const padding = 5;
+    const maxWidth = width - (padding * 2);
+    const maxHeight = height - (padding * 2);
+
+    // Labels are bold
+    const { lines, fontSize } = fitText(ctx, text, maxWidth, maxHeight, 'bold');
+
+    ctx.font = `bold ${fontSize}px ${FONT_FAMILY}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const lineHeight = fontSize * 1.2;
+    const totalTextHeight = lines.length * lineHeight;
+    let currentTextY = y + (height - totalTextHeight) / 2 + (lineHeight / 2);
+
+    for (const line of lines) {
+        ctx.fillText(line, x + width / 2, currentTextY);
+        currentTextY += lineHeight;
+    }
+}
+
+function fitText(
+    ctx: CanvasRenderingContext2D,
+    text: string,
+    maxWidth: number,
+    maxHeight: number,
+    fontWeight: string
+): { lines: string[], fontSize: number } {
+    if (!text) return { lines: [], fontSize: 12 };
+
+    let bestLines: string[] = [text];
+    let bestSize = 10;
+
+    // Try sizes from starting size down to 8px
+    const startSize = fontWeight === 'bold' ? 24 : 16;
+
+    for (let size = startSize; size >= 8; size -= 1) {
+        ctx.font = `${fontWeight} ${size}px ${FONT_FAMILY}`;
+        const lines = wrapText(ctx, text, maxWidth);
+        const totalHeight = lines.length * size * 1.2;
+
+        if (totalHeight <= maxHeight) {
+            // Check if any single line is still too wide (e.g. forced break didn't work?)
+            // wrapText should guarantee width <= maxWidth but let's be safe.
+            const widening = lines.some(l => ctx.measureText(l).width > maxWidth);
+            if (!widening) {
+                return { lines, fontSize: size };
+            }
+        }
+
+        if (size === 8) {
+            bestLines = lines;
+        }
+    }
+
+    return { lines: bestLines, fontSize: 8 };
+}
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = words[0] || '';
+
+    // Helper to calculate width
+    const getWidth = (t: string) => ctx.measureText(t).width;
+
+    // First, handle the very first word if it's too long
+    if (getWidth(currentLine) > maxWidth) {
+        // Break the first word
+        const broken = breakWord(ctx, currentLine, maxWidth);
+        lines.push(...broken.slice(0, -1));
+        currentLine = broken[broken.length - 1];
+    }
+
+    for (let i = 1; i < words.length; i++) {
+        const word = words[i];
+        const width = getWidth(currentLine + " " + word);
+
+        if (width < maxWidth) {
+            currentLine += " " + word;
+        } else {
+            lines.push(currentLine);
+            currentLine = word;
+
+            // If the new start-of-line word is itself too long, break it
+            if (getWidth(currentLine) > maxWidth) {
+                const broken = breakWord(ctx, currentLine, maxWidth);
+                lines.push(...broken.slice(0, -1));
+                currentLine = broken[broken.length - 1];
+            }
+        }
+    }
+    if (currentLine) lines.push(currentLine);
+    return lines;
+}
+
+function breakWord(ctx: CanvasRenderingContext2D, word: string, maxWidth: number): string[] {
+    const parts: string[] = [];
+    let currentPart = "";
+
+    for (const char of word) {
+        if (ctx.measureText(currentPart + char).width > maxWidth) {
+            parts.push(currentPart);
+            currentPart = char;
+        } else {
+            currentPart += char;
+        }
+    }
+    if (currentPart) parts.push(currentPart);
+    return parts;
 }

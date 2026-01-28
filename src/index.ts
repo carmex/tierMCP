@@ -23,14 +23,14 @@ const GenerateTierListSchema = z.object({
     backgroundColor: z.string().optional(),
     tiers: z.array(z.object({
         id: z.string(),
-        label: z.string(),
+        label: z.string().max(50),
         color: z.string()
     })).optional(),
     items: z.array(z.object({
         id: z.string(),
         tier: z.string(),
         imageUrl: z.string().optional(),
-        text: z.string().optional()
+        text: z.string().max(50).optional()
     }))
 });
 
@@ -66,7 +66,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                                 type: "object",
                                 properties: {
                                     id: { type: "string" },
-                                    label: { type: "string" },
+                                    label: { type: "string", description: "Max 50 characters" },
                                     color: { type: "string" }
                                 },
                                 required: ["id", "label", "color"]
@@ -81,7 +81,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                                     id: { type: "string" },
                                     tier: { type: "string", description: "ID or Label of the tier to place this item in" },
                                     imageUrl: { type: "string", description: "URL of the item image" },
-                                    text: { type: "string", description: "Text label if no image" }
+                                    text: { type: "string", description: "Text label if no image (Max 50 characters)" }
                                 },
                                 required: ["id", "tier"]
                             }
