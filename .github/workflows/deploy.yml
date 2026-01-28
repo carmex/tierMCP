@@ -17,6 +17,8 @@ jobs:
           key: ${{ secrets.KEY }}
           port: ${{ secrets.PORT || '22' }}
           script: |
+            export NVM_DIR="$HOME/.nvm"
+            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
             cd /opt/tier-list-mcp
             git pull origin main
             npm install
