@@ -62,7 +62,11 @@ async function loadItemImage(url: string): Promise<any | null> {
             responseType: 'arraybuffer',
             timeout: IMAGE_TIMEOUT_MS,
             maxContentLength: MAX_IMAGE_SIZE_BYTES,
-            maxRedirects: 0 // Prevent redirecting to localhost
+            maxRedirects: 0, // Prevent redirecting to localhost
+            headers: {
+                'User-Agent': 'TierListMCP/1.0 (https://github.com/creationix/tierMCP; non-commercial tool)',
+                'Accept': 'image/*'
+            }
         });
         return await loadImage(Buffer.from(response.data));
     } catch (e) {
