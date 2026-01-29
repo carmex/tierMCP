@@ -35,7 +35,7 @@ Type=simple
 User=www-data
 WorkingDirectory=/opt/tier-list-mcp
 Environment=MCP_TRANSPORT=sse
-Environment=PORT=3000
+Environment=PORT=3003
 ExecStart=/usr/bin/node dist/index.js
 Restart=on-failure
 
@@ -64,12 +64,12 @@ Ensure modules are enabled: `a2enmod proxy proxy_http proxy_wstunnel rewrite`
     ProxyRequests Off
 
     # Proxy SSE endpoint
-    ProxyPass /sse http://localhost:3000/sse flushpackets=on
-    ProxyPassReverse /sse http://localhost:3000/sse
+    ProxyPass /sse http://localhost:3003/sse flushpackets=on
+    ProxyPassReverse /sse http://localhost:3003/sse
 
     # Proxy Messages endpoint
-    ProxyPass /messages http://localhost:3000/messages
-    ProxyPassReverse /messages http://localhost:3000/messages
+    ProxyPass /messages http://localhost:3003/messages
+    ProxyPassReverse /messages http://localhost:3003/messages
 
     # Optional: logs
     ErrorLog ${APACHE_LOG_DIR}/tier-mcp-error.log

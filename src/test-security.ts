@@ -9,7 +9,7 @@ async function testSecurity() {
     console.log('\nTest 1: SSRF Protection (Localhost Access)');
     const ssrfConfig: TierListConfig = {
         items: [
-            { id: '1', tier: 'S', imageUrl: 'http://localhost:3000/favicon.ico' } // Should fail
+            { id: '1', tier: 'S', imageUrl: 'http://localhost:3003/favicon.ico' } // Should fail
         ]
     };
     try {

@@ -260,7 +260,7 @@ async function run() {
             await transport.handleRequest(req, res);
         });
 
-        const port = process.env.PORT || 3000;
+        const port = process.env.PORT || 3003;
         app.listen(port, () => {
             console.log(`Tier List MCP Server running on StreamableHTTP at http://localhost:${port}/mcp`);
         });
