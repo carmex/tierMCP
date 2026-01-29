@@ -54,7 +54,11 @@ async function validateUrl(inputUrl: string): Promise<string> {
     return inputUrl;
 }
 
-async function loadItemImage(url: string): Promise<any | null> {
+export async function loadItemImage(url: string, retryCount = 0): Promise<any | null> {
+    const MAX_RETRIES = 3;
+    const INITIAL_DELAY_MS = 1000;
+    const BACKOFF_FACTOR = 2;
+
     try {
         const validatedUrl = await validateUrl(url);
 
@@ -69,10 +73,30 @@ async function loadItemImage(url: string): Promise<any | null> {
             }
         });
         return await loadImage(Buffer.from(response.data));
-    } catch (e) {
+    } catch (e: any) {
         // Validation errors (Security/ClientError) should definitely be thrown to the user
         if (e instanceof ClientError) {
             throw e;
+        }
+
+        // Handle 429 too many requests with exponential backoff
+        if (e.response?.status === 429 && retryCount < MAX_RETRIES) {
+            let delay = INITIAL_DELAY_MS * Math.pow(BACKOFF_FACTOR, retryCount);
+
+            // Respect Retry-After header if present
+            const retryAfter = e.response.headers['retry-after'];
+            if (retryAfter) {
+                // Retry-After can be seconds or a date. Simple handling for seconds here.
+                const seconds = parseInt(retryAfter, 10);
+                if (!isNaN(seconds)) {
+                    delay = seconds * 1000;
+                }
+            }
+
+            console.warn(`Rate limited (429) for ${url}. Retrying in ${delay}ms... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+            return loadItemImage(url, retryCount + 1);
         }
 
         // Other errors (network, 404, etc.) we can just log and skip the image
