@@ -248,7 +248,7 @@ server.setRequestHandler(GetPromptRequestSchema, async (request) => {
 async function run() {
     const transportType = process.env.MCP_TRANSPORT || "stdio";
 
-    if (transportType === "sse") {
+    if (transportType === "http") {
         const app = express();
         app.use(cors());
         app.use(morgan('combined'));

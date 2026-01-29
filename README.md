@@ -46,6 +46,14 @@ The server runs over stdio. Configure your MCP client (e.g., Claude Desktop, etc
 node /path/to/tierMCP/dist/index.js
 ```
 
+### Running over HTTP
+To run the server in HTTP mode (StreamableHTTP), you can use the provided script:
+
+```bash
+npm run start:http
+```
+This will start the server on port 3000 at `http://localhost:3000/mcp`.
+
 ### JSON-RPC Configuration
 Add this to your MCP settings file:
 
