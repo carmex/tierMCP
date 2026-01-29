@@ -1,4 +1,4 @@
-import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas';
+import { createCanvas, loadImage, CanvasRenderingContext2D } from '@napi-rs/canvas';
 import { TierListConfig, DEFAULT_TIERS, TierItem, Tier } from './types';
 import { ClientError } from './errors';
 import axios from 'axios';

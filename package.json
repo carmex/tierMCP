@@ -14,14 +14,15 @@
   "type": "commonjs",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.3",
+    "@napi-rs/canvas": "^0.1.89",
     "@types/morgan": "^1.9.10",
     "@types/node": "^25.0.10",
     "axios": "^1.13.3",
-    "canvas": "^3.2.1",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "morgan": "^1.10.1",
     "ts-node": "^10.9.2",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "zod": "^4.3.6"
   },

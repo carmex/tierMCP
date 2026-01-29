@@ -1,0 +1,21 @@
+{
+    "name": "tier-list",
+    "description": "An MCP server that generates Tiermaker-style tier list images from text and image URLs.",
+    "version": "1.0.0",
+    "repository": "https://github.com/carmex/tierMCP",
+    "startCommand": {
+        "type": "stdio",
+        "command": "npx",
+        "args": [
+            "-y",
+            "tsx",
+            "src/index.ts"
+        ]
+    },
+    "tags": [
+        "image-generation",
+        "utility",
+        "tier-list",
+        "fun"
+    ]
+}
