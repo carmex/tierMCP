@@ -85,3 +85,6 @@ Returns the default configuration (S, A, B, C, D, F) with their colors.
     ```bash
     npm run test-gen
     ```
+
+## Contributing
+Feature requests and pull requests are welcome! Feel free to open an issue or submit a PR.

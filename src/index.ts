@@ -1,6 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { SSEServerTransport } from "@modelcontextprotocol/sdk/server/sse.js";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import express from "express";
 import cors from "cors";
 import morgan from "morgan";
@@ -253,25 +253,16 @@ async function run() {
         app.use(cors());
         app.use(morgan('combined'));
 
-        let transport: SSEServerTransport | null = null;
+        const transport = new StreamableHTTPServerTransport();
+        await server.connect(transport);
 
-        app.get("/sse", async (req, res) => {
-            console.log("New SSE connection");
-            transport = new SSEServerTransport("/messages", res);
-            await server.connect(transport);
-        });
-
-        app.post("/messages", async (req, res) => {
-            if (transport) {
-                await transport.handlePostMessage(req, res);
-            } else {
-                res.status(400).send("No active connection");
-            }
+        app.all("/mcp", async (req, res) => {
+            await transport.handleRequest(req, res);
         });
 
         const port = process.env.PORT || 3000;
         app.listen(port, () => {
-            console.log(`Tier List MCP Server running on SSE at http://localhost:${port}/sse`);
+            console.log(`Tier List MCP Server running on StreamableHTTP at http://localhost:${port}/mcp`);
         });
 
     } else {
